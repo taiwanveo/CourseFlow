@@ -26,9 +26,8 @@ services:
     region: singapore
     healthCheckPath: /
     autoDeploy: true
-    envVarGroups:
-      - courseflow-shared
     envVars:
+      - fromGroup: courseflow-shared
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_SUPABASE_URL
@@ -45,9 +44,8 @@ services:
     plan: starter
     region: singapore
     autoDeploy: true
-    envVarGroups:
-      - courseflow-shared
     envVars:
+      - fromGroup: courseflow-shared
       - key: NODE_ENV
         value: production
 
