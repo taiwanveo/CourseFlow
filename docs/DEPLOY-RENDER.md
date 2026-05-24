@@ -32,9 +32,7 @@ git push -u origin main
 
 - 已在 Supabase 執行 `supabase/migrations/*.sql`
 - Storage bucket：`courseflow-assets`（私有）
-- **Authentication → URL configuration** 新增：
-  - Site URL：`https://courseflow-web.onrender.com`（以實際 Render 網域為準）
-  - Redirect URLs：`https://courseflow-web.onrender.com/**`
+- **Authentication → URL configuration** 新增（見下方 §5，網域以 Render 實際 URL 為準）
 
 ### 3. Redis（必要）
 
@@ -42,6 +40,19 @@ git push -u origin main
 - Upstash 建議使用 `rediss://` TLS 網址；本專案會自動將 `redis://*.upstash.io` 升級為 `rediss://`
 
 ### 4. 機密環境變數（部署時在 Dashboard 填寫）
+
+> **登入失敗常見原因**：`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` 必須在 **Docker 建置當下** 就存在（會被編進前端 JS）。僅在執行階段設定而沒有重新 deploy，瀏覽器端的 Supabase 客戶端會是空的，表現為「登入後立刻被踢回登入頁」或無法登入。修改 `Dockerfile.web` 後需 **Clear build cache & deploy** 一次。
+
+### 5. Supabase Auth 網址（登入必設）
+
+在 Supabase Dashboard → **Authentication → URL configuration**：
+
+- **Site URL**：`https://courseflow-web-txjr.onrender.com`（以你實際 Render 網域為準）
+- **Redirect URLs**：`https://courseflow-web-txjr.onrender.com/**`
+
+若使用 Email 註冊且開啟「Confirm email」，需先到信箱點確認信才能登入。
+
+### 6. 機密環境變數清單
 
 | 變數 | Web | Worker | 說明 |
 |------|:---:|:---:|------|
@@ -52,7 +63,8 @@ git push -u origin main
 | `REDIS_URL` | ✓ | ✓ | BullMQ 連線字串 |
 | `API_KEY_ENCRYPTION_SECRET` | ✓ | ✓ | **生產環境請換成長隨機字串**（≥32 字元） |
 
-> `NEXT_PUBLIC_SUPABASE_URL` 與 `SUPABASE_URL` 在 Web 服務都要設，否則 middleware 與 admin API 可能失敗。
+> `NEXT_PUBLIC_SUPABASE_URL` 與 `SUPABASE_URL` 在 Web 服務都要設，否則 middleware 與 admin API 可能失敗。  
+> 變更任一 `NEXT_PUBLIC_*` 後請在 Render 觸發 **重新部署**（建議 Clear build cache）。
 
 ## 部署方式 A：Blueprint（建議）
 
@@ -106,9 +118,18 @@ git push -u origin main
 | Worker OOM / 渲染失敗 | 將 worker `plan` 改為 `standard`（更多記憶體） |
 | 15 分鐘無人使用 Web 變慢 | Starter 會休眠；可改 Standard 或接受冷啟動 |
 
+## 費用與方案限制
+
+| 服務 | Free 方案 | Starter 以上 |
+|------|-----------|--------------|
+| **Web**（Docker） | 可建立（會休眠） | 建議正式環境 |
+| **Worker**（背景服務） | **不支援** | **必須**綁定付款方式 |
+
+若 API 回傳 `402 Payment information is required`，請到 [Render Billing](https://dashboard.render.com/billing) 新增信用卡後，再建立 `courseflow-worker`（或套用 Blueprint）。
+
 ## 費用參考（約略）
 
-- Web `starter` + Worker `starter`：依 Render 定價計費
+- Web `free` / `starter` + Worker `starter`：依 Render 定價計費
 - Supabase、Upstash：各服務自有免費額度
 
 ## 本機無法由 Agent 代完成的項目
