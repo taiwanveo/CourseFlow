@@ -1,0 +1,70 @@
+# CourseFlow — Render Blueprint（藍圖）
+# Web（Next.js）+ Worker（BullMQ / HyperFrames MP4 渲染）
+#
+# 部署步驟見 docs/DEPLOY-RENDER.md
+# Dashboard：https://dashboard.render.com/blueprint/new?repo=<你的 GitHub HTTPS 網址>
+
+envVarGroups:
+  - name: courseflow-shared
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: API_KEY_ENCRYPTION_SECRET
+        sync: false
+
+services:
+  - type: web
+    name: courseflow-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile.web
+    dockerContext: .
+    plan: starter
+    region: singapore
+    healthCheckPath: /
+    autoDeploy: true
+    envVarGroups:
+      - courseflow-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+
+  - type: worker
+    name: courseflow-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile.worker
+    dockerContext: .
+    # MP4 渲染需 FFmpeg + Chrome，建議至少 starter；若 OOM 可改 standard
+    plan: starter
+    region: singapore
+    autoDeploy: true
+    envVarGroups:
+      - courseflow-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+# 若不想用 Upstash，可改為 Render Key Value（鍵值儲存）並取消下方註解，
+# 並刪除 envVarGroups 裡手動設定的 REDIS_URL。
+#
+# services:
+#   - type: keyvalue
+#     name: courseflow-redis
+#     plan: free
+#     region: singapore
+#     maxmemoryPolicy: allkeys_lru
+#     ipAllowList: []
+#
+# 然後在 courseflow-shared 改為：
+#   - key: REDIS_URL
+#     fromService:
+#       type: keyvalue
+#       name: courseflow-redis
+#       property: connectionString
