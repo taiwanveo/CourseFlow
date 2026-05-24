@@ -554,7 +554,7 @@ export function VisualEditorCanvas({
       tr.getLayer()?.batchDraw();
       return;
     }
-    const node = stage.findOne<Konva.Node>((n) => n.id() === selectedId);
+    const node = stage.findOne<Konva.Node>((n: Konva.Node) => n.id() === selectedId);
     if (node) {
       tr.nodes([node]);
       tr.forceUpdate();

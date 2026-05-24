@@ -45,9 +45,10 @@ export function ProjectPhaseNav({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const isPlayPage = current === "play";
 
   const lockPhase = async (phase: PhaseId) => {
-    if (phase === current && onBeforeLock) {
+    if (!isPlayPage && phase === current && onBeforeLock) {
       await onBeforeLock();
     }
     const res = await fetch(`/api/projects/${projectId}/phases/${phase}/lock`, {
@@ -89,7 +90,7 @@ export function ProjectPhaseNav({
           const active = p.id === current;
           const isLocked = locks[p.id];
           const showLock =
-            !isLocked && p.id === current && current !== "play" && canLockPhase(locks, p.id);
+            !isLocked && p.id === current && !isPlayPage && canLockPhase(locks, p.id);
 
           return (
             <div key={p.id} className="flex min-w-[9.5rem] flex-col gap-1.5">
