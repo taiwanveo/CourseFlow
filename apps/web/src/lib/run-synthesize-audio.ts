@@ -1,24 +1,9 @@
-import { createRequire } from "node:module";
 import type { CourseComposition } from "@courseflow/core";
 import type { TtsProviderId } from "@courseflow/tts";
+import { synthesizeSpeech } from "@courseflow/tts";
 import { decryptApiKey } from "@/lib/crypto";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { saveComposition } from "@/lib/project-composition";
-
-declare const __non_webpack_require__: NodeRequire;
-
-function loadEdgeTts() {
-  const req =
-    typeof __non_webpack_require__ === "function"
-      ? __non_webpack_require__
-      : createRequire(import.meta.url);
-  return req("edge-tts-universal") as {
-    EdgeTTS: new (
-      text: string,
-      voice: string,
-    ) => { synthesize: () => Promise<{ audio: { arrayBuffer: () => Promise<ArrayBuffer> } }> };
-  };
-}
 
 async function synthesizeStepAudio(
   provider: TtsProviderId,
@@ -27,20 +12,11 @@ async function synthesizeStepAudio(
   apiKey?: string,
   model?: string,
 ): Promise<Buffer> {
-  if (provider === "edge-tts") {
-    const { EdgeTTS } = loadEdgeTts();
-    const tts = new EdgeTTS(text, voiceId);
-    const result = await tts.synthesize();
-    const arrayBuffer = await result.audio.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  }
-
-  const { synthesizeSpeech } = await import("@courseflow/tts");
   return synthesizeSpeech(
     provider,
     text,
     voiceId,
-    { provider, apiKey },
+    apiKey ? { provider, apiKey } : { provider },
     model ? { model } : undefined,
   );
 }

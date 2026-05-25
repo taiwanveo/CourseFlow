@@ -65,6 +65,8 @@ git push -u origin main
 | `COURSEFLOW_FORCE_QUEUE` | 可選 | 可選 | 設 `1` 強制入隊（略過 Worker 心跳檢查，除錯用） |
 
 **佇列自動切換**：Web 會讀 Redis 鍵 `courseflow:worker:heartbeat`。Worker 每 15 秒更新；若逾時未見心跳，TTS 改在 Web 內 **inline** 同步完成（僅 Web 上線時可用）。MP4 匯出仍須部署 `courseflow-worker`。
+
+**Edge-TTS 部署**：`apps/web` 需直接依賴 `edge-tts-universal`，且 `next.config.ts` 設 `outputFileTracingRoot` 指向 monorepo 根目錄，否則 Docker standalone 執行時會 `Cannot find module 'edge-tts-universal'`。
 | `API_KEY_ENCRYPTION_SECRET` | ✓ | ✓ | **生產環境請換成長隨機字串**（≥32 字元） |
 
 > `NEXT_PUBLIC_SUPABASE_URL` 與 `SUPABASE_URL` 在 Web 服務都要設，否則 middleware 與 admin API 可能失敗。  
