@@ -50,20 +50,20 @@ export async function POST(
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if (!shouldUseJobQueue()) {
+  if (!(await shouldUseJobQueue())) {
     await supabase
       .from("render_jobs")
       .update({
         status: "failed",
         progress: 0,
         error_message:
-          "本機未啟用佇列（COURSEFLOW_INLINE_JOBS=1）。請執行 pnpm dev:worker 並關閉該變數後再匯出。",
+          "未偵測到 background worker（Redis 心跳逾時）。請啟動 courseflow-worker 或本機 pnpm dev:worker。",
       })
       .eq("id", job.id);
     return NextResponse.json(
       {
         error:
-          "MP4 匯出需要 worker。請另開終端執行 pnpm dev:worker，並將 COURSEFLOW_INLINE_JOBS 設為 0 或移除。",
+          "MP4 匯出需要 background worker。請在 Render 部署 courseflow-worker，或本機執行 pnpm dev:worker。",
       },
       { status: 503 },
     );

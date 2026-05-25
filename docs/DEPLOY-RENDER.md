@@ -61,7 +61,10 @@ git push -u origin main
 | `SUPABASE_URL` | ✓ | ✓ | 通常與上面 URL 相同 |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✓ | ✓ | **機密**，僅伺服器 |
 | `REDIS_URL` | ✓ | ✓ | BullMQ 連線字串 |
-| `COURSEFLOW_INLINE_JOBS` | 可選（本機） | — | **僅本機**設 `1` 時 TTS 走 Web 同步、不寫 Redis；**Render 勿設**，需 Worker 處理佇列 |
+| `COURSEFLOW_INLINE_JOBS` | 可選 | — | 設 `1` 強制 TTS／渲染不走佇列（本機省 Redis） |
+| `COURSEFLOW_FORCE_QUEUE` | 可選 | 可選 | 設 `1` 強制入隊（略過 Worker 心跳檢查，除錯用） |
+
+**佇列自動切換**：Web 會讀 Redis 鍵 `courseflow:worker:heartbeat`。Worker 每 15 秒更新；若逾時未見心跳，TTS 改在 Web 內 **inline** 同步完成（僅 Web 上線時可用）。MP4 匯出仍須部署 `courseflow-worker`。
 | `API_KEY_ENCRYPTION_SECRET` | ✓ | ✓ | **生產環境請換成長隨機字串**（≥32 字元） |
 
 > `NEXT_PUBLIC_SUPABASE_URL` 與 `SUPABASE_URL` 在 Web 服務都要設，否則 middleware 與 admin API 可能失敗。  

@@ -70,7 +70,7 @@ export async function POST(
   const { shouldUseJobQueue } = await import("@/lib/job-queue");
 
   let queued = false;
-  if (shouldUseJobQueue()) {
+  if (await shouldUseJobQueue()) {
     try {
       const { getAudioQueue } = await import("@/lib/queue");
       await getAudioQueue().add("synthesize", {

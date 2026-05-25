@@ -60,7 +60,9 @@ pnpm dev
 ```
 
 預設 **只啟動 Web**（不會常駐 Worker，避免 BullMQ 空轉耗盡 Upstash 指令額度）。  
-本機 `apps/web/.env.local` 建議設 `COURSEFLOW_INLINE_JOBS=1`，批次 TTS 會在 Web 進程內同步完成，無需 Worker。
+Web 會檢查 Redis 上的 **Worker 心跳**：無 Worker 時 TTS 自動改在 Web 內同步合成；有 Worker 才寫入 BullMQ。
+
+本機可選 `COURSEFLOW_INLINE_JOBS=1`（強制不走佇列，即使 Worker 在線）。
 
 需要 **MP4 匯出** 或 **佇列版 TTS** 時，另開終端：
 
@@ -68,7 +70,7 @@ pnpm dev
 pnpm dev:worker
 ```
 
-並將 `COURSEFLOW_INLINE_JOBS` 移除或設為 `0`，且兩邊使用相同 `REDIS_URL`。
+Worker 與 Web 需使用相同 `REDIS_URL`。
 
 ### 5. WVP Skill 同步
 

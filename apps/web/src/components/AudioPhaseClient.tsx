@@ -214,7 +214,7 @@ export function AudioPhaseClient({
 
       if (attempt >= 60) {
         toast(
-          "任務仍在佇列中，請確認 worker 已啟動（另開終端執行 pnpm dev:worker，且勿設 COURSEFLOW_INLINE_JOBS=1）",
+          "任務仍在佇列中，請確認 courseflow-worker 已啟動（本機：pnpm dev:worker；Render：需部署 worker 服務）",
           "error",
         );
         onDone();

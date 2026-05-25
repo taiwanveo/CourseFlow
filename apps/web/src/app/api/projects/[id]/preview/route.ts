@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { PhaseLocks } from "@courseflow/core";
+import { shouldUseJobQueue } from "@/lib/job-queue";
 import { getRenderQueue } from "@/lib/queue";
 
 export async function POST(
@@ -43,6 +44,21 @@ export async function POST(
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  if (!(await shouldUseJobQueue())) {
+    await supabase
+      .from("render_jobs")
+      .update({
+        status: "failed",
+        progress: 0,
+        error_message: "未偵測到 background worker，無法開始預覽渲染。",
+      })
+      .eq("id", job.id);
+    return NextResponse.json(
+      { error: "預覽渲染需要 background worker（請部署或啟動 courseflow-worker）" },
+      { status: 503 },
+    );
+  }
+
   try {
     await getRenderQueue().add("render", {
       projectId: id,
@@ -50,8 +66,13 @@ export async function POST(
       renderJobId: job.id,
       kind,
     });
-  } catch {
-    /* worker fallback */
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "無法加入渲染佇列";
+    await supabase
+      .from("render_jobs")
+      .update({ status: "failed", progress: 0, error_message: message })
+      .eq("id", job.id);
+    return NextResponse.json({ error: "無法開始預覽渲染" }, { status: 503 });
   }
 
   return NextResponse.json({ renderJob: job });

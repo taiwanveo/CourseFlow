@@ -6,11 +6,24 @@ const workerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 dotenv.config({ path: path.join(workerRoot, ".env") });
 
 import { Worker } from "bullmq";
-import { createRedisConnection, QUEUE_NAMES } from "@courseflow/shared";
+import {
+  createRedisConnection,
+  QUEUE_NAMES,
+  touchWorkerHeartbeat,
+  WORKER_HEARTBEAT_INTERVAL_MS,
+} from "@courseflow/shared";
 import { processRender, processSynthesizeAudio } from "./processors.js";
 
 async function main() {
   const connection = createRedisConnection();
+
+  const publishHeartbeat = () => {
+    touchWorkerHeartbeat(connection).catch((err) => {
+      console.error("[worker] 心跳寫入失敗:", err);
+    });
+  };
+  publishHeartbeat();
+  setInterval(publishHeartbeat, WORKER_HEARTBEAT_INTERVAL_MS);
 
   new Worker(
     QUEUE_NAMES.audio,
