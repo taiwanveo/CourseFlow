@@ -67,16 +67,20 @@ export async function POST(
     return NextResponse.json({ error: jobError.message }, { status: 500 });
   }
 
+  const { shouldUseJobQueue } = await import("@/lib/job-queue");
+
   let queued = false;
-  try {
-    const { getAudioQueue } = await import("@/lib/queue");
-    await getAudioQueue().add("synthesize", {
-      ...jobPayload,
-      jobRunId: jobRun.id,
-    });
-    queued = true;
-  } catch {
-    queued = false;
+  if (shouldUseJobQueue()) {
+    try {
+      const { getAudioQueue } = await import("@/lib/queue");
+      await getAudioQueue().add("synthesize", {
+        ...jobPayload,
+        jobRunId: jobRun.id,
+      });
+      queued = true;
+    } catch {
+      queued = false;
+    }
   }
 
   if (!queued) {

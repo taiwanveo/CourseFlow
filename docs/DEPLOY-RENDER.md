@@ -61,6 +61,7 @@ git push -u origin main
 | `SUPABASE_URL` | ✓ | ✓ | 通常與上面 URL 相同 |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✓ | ✓ | **機密**，僅伺服器 |
 | `REDIS_URL` | ✓ | ✓ | BullMQ 連線字串 |
+| `COURSEFLOW_INLINE_JOBS` | 可選（本機） | — | **僅本機**設 `1` 時 TTS 走 Web 同步、不寫 Redis；**Render 勿設**，需 Worker 處理佇列 |
 | `API_KEY_ENCRYPTION_SECRET` | ✓ | ✓ | **生產環境請換成長隨機字串**（≥32 字元） |
 
 > `NEXT_PUBLIC_SUPABASE_URL` 與 `SUPABASE_URL` 在 Web 服務都要設，否則 middleware 與 admin API 可能失敗。  

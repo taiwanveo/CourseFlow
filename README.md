@@ -59,11 +59,16 @@ pnpm --filter @courseflow/player build
 pnpm dev
 ```
 
-另開終端：
+預設 **只啟動 Web**（不會常駐 Worker，避免 BullMQ 空轉耗盡 Upstash 指令額度）。  
+本機 `apps/web/.env.local` 建議設 `COURSEFLOW_INLINE_JOBS=1`，批次 TTS 會在 Web 進程內同步完成，無需 Worker。
+
+需要 **MP4 匯出** 或 **佇列版 TTS** 時，另開終端：
 
 ```bash
-pnpm --filter @courseflow/worker dev
+pnpm dev:worker
 ```
+
+並將 `COURSEFLOW_INLINE_JOBS` 移除或設為 `0`，且兩邊使用相同 `REDIS_URL`。
 
 ### 5. WVP Skill 同步
 

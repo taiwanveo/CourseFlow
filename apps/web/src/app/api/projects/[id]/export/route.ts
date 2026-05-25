@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { PhaseLocks } from "@courseflow/core";
+import { shouldUseJobQueue } from "@/lib/job-queue";
 import { getRenderQueue } from "@/lib/queue";
 
 export async function POST(
@@ -48,6 +49,25 @@ export async function POST(
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (!shouldUseJobQueue()) {
+    await supabase
+      .from("render_jobs")
+      .update({
+        status: "failed",
+        progress: 0,
+        error_message:
+          "本機未啟用佇列（COURSEFLOW_INLINE_JOBS=1）。請執行 pnpm dev:worker 並關閉該變數後再匯出。",
+      })
+      .eq("id", job.id);
+    return NextResponse.json(
+      {
+        error:
+          "MP4 匯出需要 worker。請另開終端執行 pnpm dev:worker，並將 COURSEFLOW_INLINE_JOBS 設為 0 或移除。",
+      },
+      { status: 503 },
+    );
+  }
 
   try {
     await getRenderQueue().add("render", {
