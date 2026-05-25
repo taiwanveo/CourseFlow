@@ -4,8 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { assertPhaseEditable } from "@courseflow/core";
 import type { PhaseLocks } from "@courseflow/core";
 import type { TtsProviderId } from "@courseflow/tts";
+import { runSynthesizeAudio } from "@/lib/run-synthesize-audio";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 export async function POST(
   req: NextRequest,
@@ -94,18 +96,7 @@ export async function POST(
     }
 
     try {
-      const inlineRes = await fetch(new URL("/api/internal/synthesize-audio", req.url), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-courseflow-internal": internalSecret,
-        },
-        body: JSON.stringify({ ...jobPayload, jobRunId: jobRun.id }),
-      });
-      const inlineData = (await inlineRes.json()) as { error?: string };
-      if (!inlineRes.ok) {
-        throw new Error(inlineData.error ?? "合成失敗");
-      }
+      await runSynthesizeAudio(jobPayload);
       await supabase.from("job_runs").update({ status: "completed" }).eq("id", jobRun.id);
       return NextResponse.json({ ok: true, jobRunId: jobRun.id, inline: true });
     } catch (e) {

@@ -241,12 +241,24 @@ export function AudioPhaseClient({
         resolve(true);
       };
 
-      const res = await fetch(`/api/projects/${projectId}/synthesize-audio`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+      let res: Response;
+      try {
+        res = await fetch(`/api/projects/${projectId}/synthesize-audio`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "無法連線至伺服器", "error");
+        onDone?.();
+        resolve(false);
+        return;
+      }
+      const data = (await res.json()) as {
+        error?: string;
+        inline?: boolean;
+        jobRunId?: string;
+      };
       if (!res.ok) {
         toast(data.error ?? "合成失敗", "error");
         onDone?.();
